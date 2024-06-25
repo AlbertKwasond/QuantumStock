@@ -1,0 +1,98 @@
+﻿@page "/expensescategory"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<PageTitle>Expenses category list</PageTitle>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card" id="orderList">
+            <div class="card-header border-0">
+                <div class="row align-items-center gy-3">
+                    <div class="col-sm">
+                        <h5 class="card-title mb-0">Expenses Category</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body pt-0">
+                <div>
+                    <div class="table-responsive table-card mb-1">
+                        @if (expensesCategories == null)
+                        {
+                            <p><em>Loading...</em></p>
+                        }
+                        else if (expensesCategories.Count == 0)
+                        {
+                            <div class="col-sm-auto">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button class="btn btn-primary" @onclick="AddCategory">Create Expenses</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-sm-auto">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button class="btn btn-success" @onclick="AddCategory">Create Expenses</button>
+                                </div>
+                            </div>
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in expensesCategories)
+                                    {
+                                        <tr>
+                                            <td>@category.Name</td>
+                                            <td>
+                                                <button class="btn btn-primary" @onclick="@(() => EditCategory(@category.Id))">Edit</button>
+                                                <button class="btn btn-danger" @onclick="() => DeleteCategory(category.Id)">Delete</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ExpensesCategory>? expensesCategories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadExpensesCategories();
+    }
+
+    void AddCategory()
+    {
+        NavigationManager.NavigateTo("expensesCategoriesform");
+    }
+
+    void EditCategory(int id)
+    {
+        NavigationManager.NavigateTo($"edit-expensesCategoriesform/{id}");
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        await Http.DeleteAsync($"api/expensesCategories/{id}");
+        await LoadExpensesCategories();
+    }
+
+    async Task LoadExpensesCategories()
+    {
+        await Task.Delay(100);
+        expensesCategories = await Http.GetFromJsonAsync<List<ExpensesCategory>>("api/expensesCategories");
+    }
+}

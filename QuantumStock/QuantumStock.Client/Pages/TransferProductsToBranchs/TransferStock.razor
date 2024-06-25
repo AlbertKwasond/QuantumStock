@@ -1,0 +1,128 @@
+﻿@page "/transferstock"
+@inject HttpClient Http
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@code {
+    private TransferProduct transferProduct = new TransferProduct();
+    private List<Branch>? branches;
+    private List<Product>? products; // Renamed from product to products for clarity
+    private List<TransferProduct>? transferProductsList;
+    private int branchId; // Added to store selected branch ID
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        branches = await Http.GetFromJsonAsync<List<Branch>>("api/branch");
+        products = await Http.GetFromJsonAsync<List<Product>>("api/products");
+    }
+
+    private async Task SaveProduct()
+    {
+        await Http.PostAsJsonAsync("api/TransferProducts", transferProduct);
+        await LoadTransferProducts(); // Renamed from LoadAuthor to LoadTransferProducts for clarity
+    }
+
+    private async Task LoadTransferProducts()
+    {
+        var result = await Http.GetFromJsonAsync<List<TransferProduct>>($"api/TransferProducts/{transferProduct.BranchId}");
+        if (result is not null)
+            transferProductsList = result; // Corrected assignment
+    }
+
+
+    async Task DeleteProduct(int id)
+    {
+        await Http.DeleteAsync($"api/TransferProducts/{id}");
+        await LoadTransferProducts();
+    }
+}
+
+<div class="row justify-content-center">
+    <div class="col-xxl-9">
+        <div class="card">
+
+            <h3>Transfer Product to Branch</h3>
+
+            <EditForm Model="transferProduct" OnValidSubmit="SaveProduct">
+                <div class="row g-3">
+
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="col-lg-3 col-sm-3">
+                        <label for="branchId" class="form-label">Branch Name</label>
+                        <InputSelect id="branchId" class="form-control" @bind-Value="transferProduct.BranchId">
+                            <option value="">Select a branch</option>
+                            @if (branches != null)
+                            {
+                                @foreach (var branch in branches)
+                                {
+                                    <option value="@branch.Id">@branch.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-lg-4 col-sm-3">
+                        <label for="productId" class="form-label">Product</label>
+                        <InputSelect id="productId" class="form-control" @bind-Value="transferProduct.ProductsId">
+                            <option value="">Select a product</option>
+                            @if (products != null)
+                            {
+                                @foreach (var productItem in products)
+                                {
+                                    <option value="@productItem.Id">@productItem.Name</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-lg-2 col-sm-6">
+                        <label for="totalQty" class="form-label">Total Quantity</label>
+                        <InputNumber id="totalQty" class="form-control" @bind-Value="transferProduct.Qty" />
+                    </div>
+                    <div class="col-lg-2 col-sm-6">
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </div>
+
+                </div>
+            </EditForm>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                @if (transferProductsList == null)
+                {
+                    <p><em>Loading...</em></p>
+                }
+                else if (transferProductsList.Count == 0)
+                {
+                    <p><em>No products found.</em></p>
+                }
+                else
+                {
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Quantity</th>
+                                <th>Branch Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in transferProductsList)
+                            {
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td>@item.Qty</td>
+                                            <td>@item.BranchName</td>
+                                    <td>
+                                        <button class="btn btn-danger" @onclick="() => DeleteProduct(item.Id)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>

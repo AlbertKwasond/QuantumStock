@@ -1,0 +1,56 @@
+﻿@page "/categoryform"
+@page "/edit-categoryform/{id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@code {
+    [Parameter]
+    public int? id { get; set; }
+
+    private Category category = new Category();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Category>($"api/categories/{id}");
+            if (result != null)
+            {
+                category = result;
+            }
+        }
+        
+    }
+
+    private async Task SaveCategory()
+    {
+        if (id.HasValue)
+        {
+            await Http.PutAsJsonAsync($"api/categories/{id}", category);
+            NavigationManager.NavigateTo("/categories");
+
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/categories", category);
+            NavigationManager.NavigateTo("/categories");
+
+        }
+    }
+}
+
+<h3>@(id.HasValue ? "Edit Category" : "Add Category")</h3>
+
+<EditForm Model="category" OnValidSubmit="SaveCategory">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Category Name</label>
+        <InputText id="name" class="form-control" @bind-Value="category.Name" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>

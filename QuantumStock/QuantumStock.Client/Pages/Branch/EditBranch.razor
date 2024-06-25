@@ -1,0 +1,79 @@
+﻿@page "/edit-branch"
+@page "/edit-branch/{Id:Guid}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@if (Id == null)
+{
+    <h3>Create Branch</h3>
+}
+else
+{
+    <h3>Edit Branch</h3>
+}
+
+<EditForm Model="Branch" OnValidSubmit="HandleSubmit">
+    <div>
+        <label for="name">Branch Name</label>
+        <InputText id="name" @bind-Value="Branch.Name" class="form-control" />
+    </div>
+    <div>
+        <label for="email">Email</label>
+        <InputText id="email" @bind-Value="Branch.Email" class="form-control" />
+    </div>
+    <div>
+        <label for="contact">Contact</label>
+        <InputText id="contact" @bind-Value="Branch.Contact" class="form-control" />
+    </div>
+    <div>
+        <label for="location">Location</label>
+        <InputText id="location" @bind-Value="Branch.Location" class="form-control" />
+    </div>
+    <div>
+        <label for="address">Address</label>
+        <InputText id="address" @bind-Value="Branch.Address" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    public Branch Branch { get; set; } = new Branch();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue)
+        {
+            var result = await Http.GetFromJsonAsync<Branch>($"api/branch/{Id}");
+            if (result != null)
+            {
+                Branch = result;
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if (Id.HasValue)
+        {
+            var result = await Http.PutAsJsonAsync($"api/branch/{Id}", Branch);
+            if (result.IsSuccessStatusCode)
+            {
+                Branch = await result.Content.ReadFromJsonAsync<Branch>();
+            }
+        }
+        else
+        {
+            var result = await Http.PostAsJsonAsync("api/branch", Branch);
+            if (result.IsSuccessStatusCode)
+            {
+                Branch = await result.Content.ReadFromJsonAsync<Branch>();
+            }
+        }
+
+        NavigationManager.NavigateTo("/branch");
+    }
+}

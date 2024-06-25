@@ -1,0 +1,106 @@
+﻿@page "/indexCustomers"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+<PageTitle>Products list</PageTitle>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Manage your Customer</h4>
+            </div>
+            <div class="card-body">
+
+                @if (customerList.Count == 0)
+                {
+                    <div class="row g-4 mb-3">
+                        <div class="col-sm-auto">
+                            <button class="btn btn-success add-btn" @onclick="AddCustomer"><i class="ri-add-line align-bottom me-1"></i>Create Customer</button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-4 mb-3">
+                        <div class="col-sm-auto">
+                            <button class="btn btn-success add-btn" @onclick="AddCustomer"><i class="ri-add-line align-bottom me-1"></i>Create Customer</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive table-card mt-3 mb-1">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>Gender</th>
+                                    <th>Email</th>
+                                    <th>Contact</th>
+                                    <th>Address</th>
+                                    <th>Staff</th>
+                                    <th>By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in customerList)
+                                {
+                                    <tr>
+                                        <td>@item.FullName</td>
+                                        <td>@item.Gender</td>
+                                        <td>@item.Email</td>
+                                        <td>@item.Contact</td>
+                                        <td>@item.Address</td>
+                                        <td>@item.StaffId</td>
+                                        <td>@item.DateOfRegistration</td>
+                                        <td>
+                                            <button class="btn btn-primary" @onclick="@(() => EditCustomer(@item.Id))">Edit</button>
+                                            <button class="btn btn-danger" @onclick="() => DeleteCustomer(item.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    List<Customer> customerList = new List<Customer>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthor();
+    }
+
+    void AddCustomer()
+    {
+        NavigationManager.NavigateTo("customerforms");
+    }
+
+    void EditCustomer(int id)
+    {
+        NavigationManager.NavigateTo($"edit-customerform/{id}");
+    }
+
+    async Task LoadAuthor()
+    {
+        await Task.Delay(100);
+
+        var result = await Http.GetFromJsonAsync<List<Customer>>("api/customers");
+        if (result is not null)
+            customerList = result;
+    }
+
+    async Task DeleteCustomer(int id)
+    {
+        await Http.DeleteAsync($"api/customers/{id}");
+        await LoadAuthor();
+    }
+}

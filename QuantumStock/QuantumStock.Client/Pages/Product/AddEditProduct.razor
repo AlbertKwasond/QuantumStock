@@ -1,0 +1,133 @@
+﻿@page "/productform"
+@page "/edit-productform/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    private Product product = new Product();
+    private List<Category>? categories;
+    private List<Author>? authors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Product>($"api/products/{Id}");
+            if (result != null)
+            {
+                product = result;
+            }
+        }
+
+        categories = await Http.GetFromJsonAsync<List<Category>>("api/categories");
+        authors = await Http.GetFromJsonAsync<List<Author>>("api/authors");
+    }
+
+    private async Task SaveProduct()
+    {
+
+        if (Id is not null)
+        {
+            await Http.PutAsJsonAsync($"api/products/{Id}", product);
+            NavigationManager.NavigateTo("/index");
+
+        }
+        else
+        {
+
+            await Http.PostAsJsonAsync("api/Products", product);
+            NavigationManager.NavigateTo("/index");
+        }
+
+
+    }
+}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                @if (Id == null)
+                {
+                    <h3>Create Product</h3>
+                }
+                else
+                {
+                    <h3>Edit Product</h3>
+                }
+            </div>
+            <div class="card-body">
+                <EditForm Model="product" OnValidSubmit="SaveProduct">
+                    <DataAnnotationsValidator/>
+                    <ValidationSummary/>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name</label>
+                                <InputText id="name" class="form-control" @bind-Value="product.Name"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="author" class="form-label">Author Name</label>
+                                <InputSelect id="author" class="form-control" @bind-Value="product.AuthorId">
+                                    <option value="">Select a author</option>
+                                    @if (authors != null)
+                                    {
+                                        @foreach (var author in authors)
+                                        {
+                                            <option value="@author.Id">@author.Fullname</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="barcode" class="form-label">Barcode</label>
+                                <InputText id="barcode" class="form-control" @bind-Value="product.Barcode"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="totalQty" class="form-label">Total Quantity</label>
+                                <InputNumber id="totalQty" class="form-control" @bind-Value="product.TotalQty"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="costPrice" class="form-label">Cost Price</label>
+                                <InputNumber id="costPrice" class="form-control" @bind-Value="product.CostPrice"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sellingPrice" class="form-label">Selling Price</label>
+                                <InputNumber id="sellingPrice" class="form-control" @bind-Value="product.SellingPrice"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <InputSelect id="category" class="form-control" @bind-Value="product.CategorysId">
+                                    <option value="">Select a category</option>
+                                    @if (categories != null)
+                                    {
+                                        @foreach (var category in categories)
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>

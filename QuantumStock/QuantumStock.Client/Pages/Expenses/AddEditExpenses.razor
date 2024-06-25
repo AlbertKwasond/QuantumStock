@@ -1,0 +1,114 @@
+@page "/expensesform"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    private Expenses expenses = new Expenses();
+    private List<ExpensesCategory>? expensesCategoriesList;
+    private List<Staff>? staffList;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (Id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Expenses>($"api/expenses/{Id}");
+            if (result != null)
+            {
+                expenses = result;
+            }
+        }
+        expensesCategoriesList = await Http.GetFromJsonAsync<List<ExpensesCategory>>("api/ExpensesCategories");
+        staffList = await Http.GetFromJsonAsync<List<Staff>>("api/staffs");
+    }
+
+    private async Task SaveExpenses()
+    {
+
+        if (Id is not null)
+        {
+            await Http.PutAsJsonAsync($"api/expenses/{Id}", expenses);
+            NavigationManager.NavigateTo("/expenses");
+
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/expenses", expenses);
+            NavigationManager.NavigateTo("/expenses");
+        }
+
+    }
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                @if (Id == null)
+                {
+                    <h3>Create Expenses</h3>
+                }
+                else
+                {
+                    <h3>Edit Expenses</h3>
+                }
+            </div>
+            <div class="card-body">
+                <EditForm Model="expenses" OnValidSubmit="SaveExpenses">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Category Name</label>
+                                <InputSelect id="categoryName" class="form-control" @bind-Value="expenses.ExpensesCategoryId">
+                                    <option value="">Select a category name</option>
+                                    @if (expensesCategoriesList != null)
+                                    {
+                                        @foreach (var category in expensesCategoriesList)
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Amount</label>
+                                <InputNumber id="amount" class="form-control" @bind-Value="expenses.Amount" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <InputText id="description" class="form-control" @bind-Value="expenses.Description" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Staff Name</label>
+                                <InputSelect id="category" class="form-control" @bind-Value="expenses.StaffId">
+                                    <option value="">Select a staff name</option>
+                                    @if (staffList != null)
+                                    {
+                                        @foreach (var staff in staffList)
+                                        {
+                                            <option value="@staff.Id">@staff.FullName</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,94 @@
+@page "/branch"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+<PageTitle>Branches</PageTitle>
+
+<h3>Branch list</h3>
+
+@if (branches == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (branches.Count == 0)
+{
+    <p>No branches found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Location</th>
+                <th>Contact</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var branch in branches)
+            {
+                <tr>
+                    <td>@branch.Name</td>
+                    <td>@branch.Address</td>
+                    <td>@branch.Location</td>
+                    <td>@branch.Contact</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="@(() => EditBranch(branch.Id))">Edit</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="@(() => DeleteBranch(branch.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<button class="btn btn-primary" @onclick="AddBranch">Add Branch</button>
+
+@code {
+    List<Branch> branches;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBranches();
+    }
+
+    void AddBranch()
+    {
+        NavigationManager.NavigateTo("edit-branch");
+    }
+
+    void EditBranch(int Id)
+    {
+        NavigationManager.NavigateTo($"edit-branch/{Id}");
+    }
+
+    async Task LoadBranches()
+    {
+        var result = await Http.GetFromJsonAsync<List<Branch>>("api/branch");
+        if (result != null)
+        {
+            branches = result;
+        }
+        else
+        {
+            branches = new List<Branch>();
+        }
+    }
+
+    async Task DeleteBranch(int id)
+    {
+        var response = await Http.DeleteAsync($"api/branch/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadBranches();
+        }
+        else
+        {
+            // Handle the error (e.g., show a message to the user)
+        }
+    }
+}

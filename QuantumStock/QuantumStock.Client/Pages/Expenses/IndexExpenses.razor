@@ -1,0 +1,111 @@
+﻿@page "/expenses"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+<PageTitle>Expenses list</PageTitle>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card" id="orderList">
+            <div class="card-header border-0">
+                <div class="row align-items-center gy-3">
+                    <div class="col-sm">
+                        <h5 class="card-title mb-0">Expenses</h5>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="card-body pt-0">
+                <div>
+                    <div class="table-responsive table-card mb-1">
+                        @if (expensesList.Count == 0)
+                        {
+                            <div class="col-sm-auto">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button class="btn btn-primary" @onclick="AddExpenses">Create Expenses</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-sm-auto">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <button class="btn btn-success" @onclick="AddExpenses">Create Expenses</button>
+
+                                </div>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Category Name</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Staff</th>
+                                        <th>Date Time</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in expensesList)
+                                    {
+                                        <tr>
+                                            <td>@item.ExpensesCategory.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.Amount</td>
+                                            <td>@item.Staff.FullName</td>
+                                            <td>@item.DateTime</td>
+                                            <td>
+                                                <a href="/expensesform/@item.Id" class="btn btn-primary">Edit</a>
+                                                <button class="btn btn-danger" @onclick="() => DeleteProduct(item.Id)">Delete</button>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    List<Expenses> expensesList = new List<Expenses>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthor();
+    }
+
+    void AddExpenses()
+    {
+        NavigationManager.NavigateTo("expensesform");
+    }
+
+    void EditProduct(int Id)
+    {
+        NavigationManager.NavigateTo($"edit-expenses/{Id}");
+    }
+
+    async Task LoadAuthor()
+    {
+        await Task.Delay(100);
+
+        var result = await Http.GetFromJsonAsync<List<Expenses>>("api/expenses");
+        if (result is not null)
+            expensesList = result;
+    }
+
+    async Task DeleteProduct(int Id)
+    {
+        await Http.DeleteAsync($"api/expenses/{Id}");
+        await LoadAuthor();
+    }
+}

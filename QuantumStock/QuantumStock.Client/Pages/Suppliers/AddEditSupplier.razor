@@ -1,0 +1,108 @@
+﻿@page "/supplierform"
+@page "/edit-supplier/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    private Supplier suppliersAdd = new Supplier();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (Id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Supplier>($"api/suppliers/{Id}");
+            if (result != null)
+            {
+                suppliersAdd = result;
+            }
+        }
+       
+    }
+
+    private async Task SaveSupplier()
+    {
+
+        if (Id is not null)
+        {
+            await Http.PutAsJsonAsync($"api/suppliers/{Id}", suppliersAdd);
+            NavigationManager.NavigateTo("/supplier");
+
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/suppliers", suppliersAdd);
+            NavigationManager.NavigateTo("/supplier");
+        }
+
+    }
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                @if (Id == null)
+                {
+                    <h3>Create Expenses</h3>
+                }
+                else
+                {
+                    <h3>Edit Expenses</h3>
+                }
+            </div>
+            <div class="card-body">
+                <EditForm Model="suppliersAdd" OnValidSubmit="SaveSupplier">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                     <div class="row">
+                         <div class="col-md-12">
+                             <div class="mb-3">
+                                 <label for="name" class="control-label">Name</label>
+                                <InputText id="name" class="form-control" placeholder="Enter your fullname" @bind-Value="suppliersAdd.Name" />
+                             </div>
+                         </div><!--end col-->
+                         <div class="col-md-4">
+                             <div class="mb-3">
+                                 <label for="email" class="form-label">Email</label>
+                                <InputText id="email" class="form-control" @bind-Value="suppliersAdd.Email" />
+                             </div>
+                         </div><!--end col-->
+                         <div class="col-md-4">
+                             <div class="mb-3">
+                                 <label for="contact" class="form-label">Contact</label>
+                                <InputText id="contact" class="form-control" placeholder="0542879647" @bind-Value="suppliersAdd.PhoneNumber" />
+                             </div>
+                         </div><!--end col-->
+                       <div class="col-md-4">
+                           <div class="mb-3"> 
+                               <label for="address" class="form-label">Address</label>
+                                <InputText id="address" class="form-control" placeholder="Address 1" @bind-Value="suppliersAdd.Address" />
+                           </div>
+                       </div><!--end col-->
+                       <div class="col-md-4">
+                           <div class="mb-3">
+                               <label for="city" class="form-label">City</label>
+                                <InputText id="city" class="form-control" placeholder="Accra" @bind-Value="suppliersAdd.City" />
+                           </div>
+                       </div><!--end col-->
+                       <div class="col-md-4">
+                           <div class="mb-3">
+                               <label for="country" class="form-label">Country</label>
+                                <InputText id="country" class="form-control" placeholder="Ghana" @bind-Value="suppliersAdd.Country" />
+                           </div>
+                       </div><!--end col-->
+                       <div class="col-lg-12">
+                           <div class="text-end">
+                               <button type="submit" class="btn btn-primary">Submit</button>
+                           </div>
+                       </div><!--end col-->
+                   </div><!--end row-->
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>

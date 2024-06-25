@@ -1,0 +1,92 @@
+﻿@page "/categories"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Manage your Category</h4>
+            </div>
+            <div class="card-body">
+
+                @if (categories == null)
+                {
+                    <div class="row g-4 mb-3">
+                        <div class="col-sm-auto">
+                            <button class="btn btn-success add-btn" @onclick="AddCategory"><i class="ri-add-line align-bottom me-1"></i>Create Category</button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-4 mb-3">
+                        <div class="col-sm-auto">
+                            <button class="btn btn-success add-btn" @onclick="AddCategory"><i class="ri-add-line align-bottom me-1"></i>Create Category</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive table-card mt-3 mb-1">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var category in categories)
+                                {
+                                    <tr>
+                                        <td>@category.Name</td>
+                                        <td>
+                                            <button class="btn btn-primary" @onclick="@(() => EditCategory(@category.Id))">Edit</button>
+                                            <button class="btn btn-danger" @onclick="() => DeleteCategory(category.Id)">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Category>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await LoadAuthor();
+
+    }
+
+    void AddCategory()
+    {
+        NavigationManager.NavigateTo("categoryform");
+    }
+
+    void EditCategory(int id)
+    {
+        NavigationManager.NavigateTo($"edit-categoryform/{id}");
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        await Http.DeleteAsync($"api/categories/{id}");
+        categories = await Http.GetFromJsonAsync<List<Category>>("api/categories");
+    }
+
+
+    async Task LoadAuthor()
+    {
+        await Task.Delay(100);
+
+        var result = await Http.GetFromJsonAsync<List<Category>>("api/categories");
+        if (result is not null)
+            categories = result;
+    }
+}

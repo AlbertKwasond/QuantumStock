@@ -1,0 +1,88 @@
+@page "/authors"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+<PageTitle>Authors</PageTitle>
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="header-title mb-3">Authors list</h4>
+
+        <div class="table-responsive">
+            @if (authors.Count == 0)
+            {
+                <p><em>Loading...</em></p>
+                <button class="btn btn-primary" @onclick="AddAuthor">Add Authors</button>
+
+            }
+            else
+            {
+                <table class="table table-hover table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>Fullname</th>
+                            <th>Gender</th>
+                            <th>Actions</th>
+                            <th>
+                                <button class="btn btn-primary" @onclick="AddAuthor">Add Authors</button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var author in authors)
+                        {
+                            <tr>
+                                <td>@author.Fullname</td>
+                                <td>@author.Gender</td>
+                                <td>
+                                    <button class="btn btn-primary" @onclick="@(() => EditAuthor(@author.Id))">Edit</button>
+                                    <button class="btn btn-danger" @onclick="@(() => DeleteAuthor(@author.Id))">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </div> <!-- end table responsive-->
+    </div> <!-- end col-->
+</div>
+
+
+@code {
+    List<Author> authors = new List<Author>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthor();
+    }
+
+    void AddAuthor()
+    {
+        NavigationManager.NavigateTo("edit-authors");
+    }
+
+    void EditAuthor(int id)
+    {
+        NavigationManager.NavigateTo($"edit-authors/{id}");
+    }
+
+    async Task LoadAuthor()
+    {
+        await Task.Delay(100);
+
+        var result = await Http.GetFromJsonAsync<List<Author>>("api/authors");
+        if (result is not null)
+            authors = result;
+    }
+
+    async Task DeleteAuthor(int id)
+    {
+        await Http.DeleteAsync($"api/authors/{id}");
+        await LoadAuthor();
+    }
+}

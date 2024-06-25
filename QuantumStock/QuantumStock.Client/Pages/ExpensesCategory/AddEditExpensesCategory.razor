@@ -1,0 +1,56 @@
+﻿@page "/expensesCategoriesform"
+@page "/edit-expensesCategoriesform/{id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@code {
+    [Parameter]
+    public int? id { get; set; }
+
+    private ExpensesCategory  expensesCategory = new ExpensesCategory();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<ExpensesCategory>($"api/expensesCategories/{id}");
+            if (result != null)
+            {
+                expensesCategory = result;
+            }
+        }
+        
+    }
+
+    private async Task SaveExpensesCategory()
+    {
+        if (id.HasValue)
+        {
+            await Http.PutAsJsonAsync($"api/expensesCategories/{id}", expensesCategory);
+            NavigationManager.NavigateTo("/expensescategory");
+
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/expensesCategories", expensesCategory);
+            NavigationManager.NavigateTo("/expensescategory");
+
+        }
+    }
+}
+
+<h3>@(id.HasValue ? "Edit Expenses Category" : "Add Expenses Category")</h3>
+
+<EditForm Model="expensesCategory" OnValidSubmit="SaveExpensesCategory">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="category" class="form-label">Category Name</label>
+        <InputText id="category" class="form-control" @bind-Value="expensesCategory.Name" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>

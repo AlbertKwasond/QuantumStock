@@ -1,0 +1,133 @@
+﻿@page "/customerforms"
+@page "/edit-customerform/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+
+
+
+@code {
+    
+    [Parameter]
+    public int? Id { get; set; }
+    private Customer customer = new Customer();
+    private List<Staff>? staffs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Customer>($"api/customers/{Id}");
+            if (result != null)
+            {
+                customer = result;
+            }
+        }
+
+        staffs = await Http.GetFromJsonAsync<List<Staff>>("api/staffs");
+    }
+    private async Task SaveCustomer()
+    {
+        if (Id is not null)
+        {
+            await Http.PutAsJsonAsync($"api/customers/{Id}", customer);
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/customers", customer);
+        }
+
+        NavigationManager.NavigateTo("/indexCustomers");
+    }
+
+}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                @if (Id == null)
+                {
+                    <h3>Create Customer</h3>
+                }
+                else
+                {
+                    <h3>Edit Customer</h3>
+                }
+            </div>
+            <div class="card-body">
+                <EditForm Model="customer" OnValidSubmit="SaveCustomer">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <InputText id="firstName" class="form-control" @bind-Value="customer.FirstName" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="middleName" class="form-label">Middle Name</label>
+                                <InputText id="middleName" class="form-control" @bind-Value="customer.MiddleName" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <InputText id="lastName" class="form-control" @bind-Value="customer.LastName" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <InputSelect id="gender" class="form-control" @bind-Value="customer.Gender">
+                                    <option value="">Select a gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <InputText id="email" class="form-control" @bind-Value="customer.Email" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="contact" class="form-label">Contact</label>
+                                <InputText id="contact" class="form-control" @bind-Value="customer.Contact" />
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <InputText id="address" class="form-control" @bind-Value="customer.Address" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="staffName" class="form-label">Staff Name</label>
+                                <InputSelect id="staffName" class="form-control" @bind-Value="customer.StaffId">
+                                    <option value="">Select a staff</option>
+                                    @if (staffs != null)
+                                    {
+                                        @foreach (var staff in staffs)
+                                        {
+                                            <option value="@staff.Id">@staff.FullName</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>

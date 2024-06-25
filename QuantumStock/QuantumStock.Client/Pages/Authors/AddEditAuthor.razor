@@ -1,0 +1,74 @@
+﻿@page "/edit-authors"
+@page "/edit-authors/{Id:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+@if (Id == null)
+{
+    <h3>Create Author</h3>
+}
+else
+{
+    <h3>Edit Author</h3>
+}
+
+<EditForm Model="author" OnSubmit="HandleSubmit">
+    <div>
+        <label for="name">Author Name</label>
+        <InputText id="name" @bind-Value="author.Fullname" class="form-control" />
+    </div>
+    <div>
+        <label for="gender">Gender</label>
+        <select id="gender" @bind="author.Gender" class="form-control">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    public Author author { get; set; } = new Author();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is not null)
+        {
+            var result = await Http.GetFromJsonAsync<Author>($"api/authors/{(int)Id}");
+            if (result != null)
+            {
+                author = result;
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if (Id is not null)
+        {
+            var result = await Http.PutAsJsonAsync($"api/authors/{Id}", author);
+            author = await result.Content.ReadFromJsonAsync<Author>();
+        }
+        else
+        {
+            var result = await Http.PostAsJsonAsync("api/authors", author);
+            author = await result.Content.ReadFromJsonAsync<Author>();
+        }
+
+        NavigationManager.NavigateTo("/authors");
+    }
+
+    public class Author
+    {
+        public int Id { get; set; }
+        public string Fullname { get; set; }
+        public string Gender { get; set; }
+    }
+}

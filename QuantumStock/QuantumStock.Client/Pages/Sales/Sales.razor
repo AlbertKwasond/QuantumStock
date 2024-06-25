@@ -1,0 +1,110 @@
+﻿@page "/sales"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+
+<PageTitle>Sales list</PageTitle>
+
+
+<h3>Manage your sales</h3>
+
+@if (salesLists.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Amount</th>
+                <th>Paid</th>
+                <th>Due</th>
+                <th>Billed</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in salesLists)
+            {
+                <tr>
+                    <td>@item.OrderId</td>
+                    <td>@item.Customer.FullName</td>
+                    <td>@item.DateTime</td>
+                    <td>
+                        @if (item.Status == "Pending")
+                        {
+                            <span class="badge badge-soft-warning text-uppercase">
+                                @item.Status
+                            </span>
+                        }
+                        @if (item.Status == "Completed")
+                        {
+                            <span class="badge badge-soft-success text-uppercase">
+                                @item.Status
+                            </span>
+                        }
+
+                    </td>
+                    <td class="status">
+                        @if (item.PaymentStatus == "Paid")
+                        {
+                            <span class="badge badge-soft-success text-uppercase">
+                                @item.PaymentStatus
+                            </span>
+                        }
+                        @if (item.PaymentStatus == "Due")
+                        {
+                            <span class="badge badge-soft-danger">
+                                @item.PaymentStatus
+                            </span>
+                        }
+                    </td>
+                    <td class="amount"> @item.Total</td>
+                    <td class="amount"> @item.Paid</td>
+                    <td class="amount"> @item.Due</td>
+                    <td class="product_name">@item.Staff.FullName</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => DeleteProduct(item.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<button class="btn btn-primary" @onclick="SalesPOS">POS</button>
+
+@code {
+    List<SalesList> salesLists = new List<SalesList>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthor();
+    }
+
+    void SalesPOS()
+    {
+        NavigationManager.NavigateTo("pos");
+    }
+
+    async Task LoadAuthor()
+    {
+        await Task.Delay(100);
+
+        var result = await Http.GetFromJsonAsync<List<SalesList>>("api/SalesLists");
+        if (result is not null)
+            salesLists = result;
+    }
+
+    async Task DeleteProduct(int id)
+    {
+        await Http.DeleteAsync($"api/SalesLists/{id}");
+        await LoadAuthor();
+    }
+}
